@@ -54,6 +54,25 @@ The project follows Clean Architecture principles:
     ```bash
     bun install
     ```
+3.  **Create a `.env` file** in the root directory and set the `SEARCH_API_KEY` variable (see Security section).
+
+## Security
+
+This search engine requires API Key authentication for all endpoints except the root health check (`/`).
+
+**Setup:**
+
+1.  Create a `.env` file in the project root.
+2.  Add the following line, replacing the value with a strong, secret key:
+    ```dotenv
+    SEARCH_API_KEY=your-super-secret-and-strong-api-key
+    ```
+3.  Ensure `.env` is added to your `.gitignore` file.
+4.  The server will read this key on startup. If the `SEARCH_API_KEY` environment variable is not set, the server will refuse to start.
+
+**Usage:**
+
+All API requests (except `GET /`) must include an `Authorization` header with the key using the `Bearer` scheme:
 
 ### Running the Application
 
@@ -75,69 +94,70 @@ The server will start, typically on `http://localhost:3000`. The initial `movies
 ## API Endpoints
 
 Base URL: `http://localhost:3000`
+**Authentication:** All endpoints require `Authorization: Bearer <YOUR_API_KEY>` header, except `GET /`.
 
 ### Indexes
 
-- **`POST /indexes/{indexName}`**: Create or update an index with documents and configuration.
+- **`POST /indexes/{indexName}`**: Create or update an index.
 
-  - **Body:**
-    ```json
-    {
-      "config": {
-        "fields": ["fieldToIndex1", "fieldToIndex2"],
-        "storeFields": ["fieldToReturn1", "fieldToReturn2", "id"],
-        "idField": "id" // Optional, defaults to 'id'
-      },
-      "documents": [
-        { "id": "doc1", "fieldToIndex1": "content", "fieldToReturn1": "value" },
-        {
-          "id": "doc2",
-          "fieldToIndex1": "more content",
-          "fieldToReturn1": "another value"
-        }
-      ]
-    }
+  - **Example:**
+    ```bash
+    API_KEY="your-super-secret-and-strong-api-key"
+    curl -X POST http://localhost:3000/indexes/products \
+         -H "Authorization: Bearer $API_KEY" \
+         -H "Content-Type: application/json" \
+         -d '{"config": {...}, "documents": [...] }'
     ```
-  - **Example:** `curl -X POST http://localhost:3000/indexes/products -H "Content-Type: application/json" -d '{"config": {...}, "documents": [...] }'`
 
-- **`GET /indexes`**: List all available indexes and their configurations.
+- **`GET /indexes`**: List all available indexes.
 
-  - **Example:** `curl http://localhost:3000/indexes`
+  - **Example:**
+    ```bash
+    API_KEY="your-super-secret-and-strong-api-key"
+    curl -H "Authorization: Bearer $API_KEY" http://localhost:3000/indexes
+    ```
 
 - **`DELETE /indexes/{indexName}`**: Delete an index.
-  - **Example:** `curl -X DELETE http://localhost:3000/indexes/products`
+  - **Example:**
+    ```bash
+    API_KEY="your-super-secret-and-strong-api-key"
+    curl -X DELETE -H "Authorization: Bearer $API_KEY" http://localhost:3000/indexes/products
+    ```
 
 ### Search
 
-- **`GET /indexes/{indexName}/search`**: Perform a search query using URL parameters.
+- **`GET /indexes/{indexName}/search`**: Perform a search query.
 
-  - **Query Parameters:**
-    - `query` (required): The search term.
-    - `limit` (optional, default: 10): Number of results per page.
-    - `offset` (optional, default: 0): Number of results to skip.
-    - `filter[fieldName]=value` (optional): Filter results by exact field value (e.g., `filter[category]=electronics&filter[inStock]=true`).
-  - **Example:** `curl -G http://localhost:3000/indexes/movies/search --data-urlencode "query=action movie" --data-urlencode "limit=5" --data-urlencode "filter[year]=2008"`
-
-- **`POST /indexes/{indexName}/search`**: Perform a search query using a JSON body (useful for complex parameters).
-  - **Body:**
-    ```json
-    {
-      "query": "search term",
-      "limit": 10,
-      "offset": 0,
-      "filter": { "fieldName": "value", "anotherField": 123 }
-    }
+  - **Example:**
+    ```bash
+    API_KEY="your-super-secret-and-strong-api-key"
+    curl -G -H "Authorization: Bearer $API_KEY" \
+         http://localhost:3000/indexes/movies/search \
+         --data-urlencode "query=action movie" \
+         --data-urlencode "limit=5" \
+         --data-urlencode "filter[year]=2008"
     ```
-  - **Example:** `curl -X POST http://localhost:3000/indexes/movies/search -H "Content-Type: application/json" -d '{"query": "sci-fi", "filter": {"year": 1999}}'`
+
+- **`POST /indexes/{indexName}/search`**: Perform a search query via POST.
+  - **Example:**
+    ```bash
+    API_KEY="your-super-secret-and-strong-api-key"
+    curl -X POST http://localhost:3000/indexes/movies/search \
+         -H "Authorization: Bearer $API_KEY" \
+         -H "Content-Type: application/json" \
+         -d '{"query": "sci-fi", "filter": {"year": 1999}}'
+    ```
 
 ### Suggestions / Autocomplete
 
 - **`GET /indexes/{indexName}/suggest`**: Get search term suggestions.
-  - **Query Parameters:**
-    - `query` (required): The partial search term.
-    - `limit` (optional, default: 5): Maximum number of suggestions.
-    - `filter[fieldName]=value` (optional): Filter suggestions based on document fields.
-  - **Example:** `curl -G http://localhost:3000/indexes/movies/suggest --data-urlencode "query=shaw"`
+  - **Example:**
+    ```bash
+    API_KEY="your-super-secret-and-strong-api-key"
+    curl -G -H "Authorization: Bearer $API_KEY" \
+         http://localhost:3000/indexes/movies/suggest \
+         --data-urlencode "query=shaw"
+    ```
 
 ### Health Check
 

@@ -10,7 +10,28 @@ import type {
   SuggestParams,
 } from "@/interfaces/Search";
 import { file } from "bun";
-import { ApiError, BadRequestError, NotFoundError } from "./errors/ApiError";
+import {
+  ApiError,
+  BadRequestError,
+  NotFoundError,
+  UnauthorizedError,
+} from "./errors/ApiError";
+
+// --- Environment Variable Setup ---
+const ExpectedApiKey = process.env.SEARCH_API_KEY;
+
+if (!ExpectedApiKey) {
+  console.error("FATAL ERROR: SEARCH_API_KEY environment variable is not set.");
+  console.error(
+    "The search engine cannot start without an API key for security."
+  );
+  console.error(
+    "Please set the SEARCH_API_KEY environment variable and restart."
+  );
+  process.exit(1); // Exit if the API key is missing
+} else {
+  console.log("SEARCH_API_KEY loaded successfully.");
+}
 
 // --- Dependency Injection Setup ---
 const indexRepository = new InMemoryIndexRepository();
@@ -55,6 +76,30 @@ function createErrorResponse(error: unknown): Response {
   }
 
   return createJsonResponse({ error: { message, statusCode } }, statusCode);
+}
+
+// --- Authorization Middleware Logic ---
+function authenticateRequest(request: Request, url: URL): void {
+  // Allow public access to the health check endpoint
+  if (url.pathname === "/" && request.method === "GET") {
+    return; // Skip authentication for health check
+  }
+
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new UnauthorizedError(
+      'Missing or malformed Authorization header. Use "Bearer YOUR_API_KEY".'
+    );
+  }
+
+  const providedKey = authHeader.substring(7); // Remove "Bearer " prefix
+
+  if (providedKey !== ExpectedApiKey) {
+    throw new UnauthorizedError("Invalid API Key.");
+  }
+
+  // If we reach here, the key is valid
+  console.log("API Key authenticated successfully.");
 }
 
 // --- Request Handling Logic ---
@@ -226,6 +271,9 @@ const server = Bun.serve({
           url.search
         }`
       );
+
+      // --- Authentication Middleware ---
+      authenticateRequest(request, url);
 
       // --- Routing ---
       if (pathSegments[0] === "indexes") {

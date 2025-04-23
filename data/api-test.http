@@ -1,6 +1,7 @@
 # INDEX
 POST http://localhost:3000/indexes/books
 Content-Type: application/json
+Authorization: Bearer your-super-secret-and-strong-api-key
 
 {
   "config": {
@@ -15,9 +16,13 @@ Content-Type: application/json
 }
 ### SEARCH
 GET http://localhost:3000/indexes/books/search?query=Dune
+Authorization: Bearer your-super-secret-and-strong-api-key
+
 
 ### SEARCH WITH FILTER
 POST http://localhost:3000/indexes/books/search
+Authorization: Bearer your-super-secret-and-strong-api-key
+
 
 {
   "query": "Dune",
@@ -27,10 +32,16 @@ POST http://localhost:3000/indexes/books/search
 
 ### GET SUGGESTIONS (AUTO COMPLETE)
 GET http://localhost:3000/indexes/books/suggest?query=Dune
+Authorization: Bearer your-super-secret-and-strong-api-key
+
 
 ### LIST INDEXES
 GET http://localhost:3000/indexes
+Authorization: Bearer your-super-secret-and-strong-api-key
+
 
 ### DELETE INDEX
 DELETE http://localhost:3000/indexes/books
+Authorization: Bearer your-super-secret-and-strong-api-key
+
 
