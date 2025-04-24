@@ -66,7 +66,7 @@ export function CpuChart({ loadAvg }: CpuChartProps) {
         <Line
           type="monotone"
           dataKey="load"
-          stroke="var(--color-load)"
+          stroke="var(--chart-2)"
           strokeWidth={2}
           dot={{ r: 4 }}
           activeDot={{ r: 6 }}
