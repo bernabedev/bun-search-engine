@@ -41,7 +41,7 @@ export function CpuChart({ loadAvg }: CpuChartProps) {
           color: "hsl(var(--chart-2))",
         },
       }}
-      className="h-full"
+      className="h-full w-full"
     >
       <LineChart
         accessibilityLayer
