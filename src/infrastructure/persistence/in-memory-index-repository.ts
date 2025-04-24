@@ -1,6 +1,6 @@
-import type { Document } from "@/core/domain/Document";
-import type { IndexRepository } from "@/core/ports/IndexRepository";
-import type { IndexConfig } from "@/interfaces/Search";
+import type { Document } from "@/core/domain/document";
+import type { IndexRepository } from "@/core/ports/index-repository";
+import type { IndexConfig } from "@/interfaces/search";
 
 // Very basic in-memory storage. In a real app, use a database or file system.
 export class InMemoryIndexRepository implements IndexRepository {

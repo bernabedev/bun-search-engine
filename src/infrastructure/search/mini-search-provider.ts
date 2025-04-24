@@ -1,12 +1,12 @@
-import type { Document } from "@/core/domain/Document";
-import type { SearchProvider } from "@/core/ports/SearchProvider";
+import type { Document } from "@/core/domain/document";
+import type { SearchProvider } from "@/core/ports/search-provider";
 import type {
   IndexConfig,
   SearchParams,
   SearchResponse,
   SuggestParams,
   SuggestResponse,
-} from "@/interfaces/Search";
+} from "@/interfaces/search";
 import MiniSearch, {
   type Options as MiniSearchOptions,
   type SearchResult,

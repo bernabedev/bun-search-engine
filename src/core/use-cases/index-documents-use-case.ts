@@ -1,7 +1,7 @@
-import type { Document } from "@/core/domain/Document";
-import type { IndexRepository } from "@/core/ports/IndexRepository";
-import type { SearchProvider } from "@/core/ports/SearchProvider";
-import type { IndexConfig } from "@/interfaces/Search";
+import type { Document } from "@/core/domain/document";
+import type { IndexRepository } from "@/core/ports/index-repository";
+import type { SearchProvider } from "@/core/ports/search-provider";
+import type { IndexConfig } from "@/interfaces/search";
 
 export class IndexDocumentsUseCase {
   constructor(

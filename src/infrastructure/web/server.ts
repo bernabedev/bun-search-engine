@@ -1,21 +1,21 @@
-import { type Document } from "@/core/domain/Document"; // Ensure Document type is available
-import { IndexDocumentsUseCase } from "@/core/use-cases/IndexDocumentsUseCase";
-import { SearchUseCase } from "@/core/use-cases/SearchUseCase";
-import { SuggestUseCase } from "@/core/use-cases/SuggestUseCase";
-import { InMemoryIndexRepository } from "@/infrastructure/persistence/InMemoryIndexRepository";
-import { MiniSearchProvider } from "@/infrastructure/search/MiniSearchProvider";
+import { type Document } from "@/core/domain/document";
+import { IndexDocumentsUseCase } from "@/core/use-cases/index-documents-use-case";
+import { SearchUseCase } from "@/core/use-cases/search-use-case";
+import { SuggestUseCase } from "@/core/use-cases/suggest-use-case";
+import { InMemoryIndexRepository } from "@/infrastructure/persistence/in-memory-index-repository";
+import { MiniSearchProvider } from "@/infrastructure/search/mini-search-provider";
 import type {
   IndexConfig,
   SearchParams,
   SuggestParams,
-} from "@/interfaces/Search";
+} from "@/interfaces/search";
 import { file } from "bun";
 import {
   ApiError,
   BadRequestError,
   NotFoundError,
   UnauthorizedError,
-} from "./errors/ApiError";
+} from "./errors/api-error";
 
 // --- Environment Variable Setup ---
 const ExpectedApiKey = process.env.SEARCH_API_KEY;

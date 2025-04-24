@@ -1,11 +1,11 @@
-import type { Document } from "@/core/domain/Document";
+import type { Document } from "@/core/domain/document";
 import type {
   IndexConfig,
   SearchParams,
   SearchResponse,
   SuggestParams,
   SuggestResponse,
-} from "@/interfaces/Search";
+} from "@/interfaces/search";
 
 export interface SearchProvider {
   /**

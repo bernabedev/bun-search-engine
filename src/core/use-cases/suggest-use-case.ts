@@ -1,6 +1,6 @@
-import type { IndexRepository } from "@/core/ports/IndexRepository";
-import type { SearchProvider } from "@/core/ports/SearchProvider";
-import type { SuggestParams, SuggestResponse } from "@/interfaces/Search";
+import type { IndexRepository } from "@/core/ports/index-repository";
+import type { SearchProvider } from "@/core/ports/search-provider";
+import type { SuggestParams, SuggestResponse } from "@/interfaces/search";
 
 export class SuggestUseCase {
   constructor(

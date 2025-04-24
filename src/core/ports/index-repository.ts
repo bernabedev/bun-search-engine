@@ -1,5 +1,5 @@
-import type { Document } from "@/core/domain/Document";
-import type { IndexConfig } from "@/interfaces/Search";
+import type { Document } from "@/core/domain/document";
+import type { IndexConfig } from "@/interfaces/search";
 
 export interface IndexRepository {
   addDocuments(indexName: string, documents: Document[]): Promise<void>;
