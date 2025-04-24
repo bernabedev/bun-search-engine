@@ -79,16 +79,79 @@ export class MiniSearchProvider implements SearchProvider {
 
     const { query, offset = 0, limit = 10, filter } = params;
 
-    // Basic filtering - MiniSearch filter needs a function
-    const filterFn = filter
-      ? (result: SearchResult) => {
-          return Object.entries(filter).every(([key, value]) => {
-            // Check if the field exists in the stored fields for the result
-            // MiniSearch stores results based on `storeFields`
-            return config.storeFields.includes(key) && result[key] === value;
+    // Advanced filtering - MiniSearch filter needs a function
+    const filterFn = params.filter
+      ? (result: SearchResult): boolean => {
+          // result contains stored fields
+          // Iterate over all filter conditions provided in params.filter
+          return Object.entries(params.filter!).every(([field, condition]) => {
+            // Check if the field exists in the document's stored fields
+            // Note: Filtering only works reliably on fields included in 'storeFields'
+            if (!(field in result)) {
+              console.warn(
+                `Attempting to filter on field "${field}" which is not in storeFields or not present in document ID ${result.id}. Skipping filter for this field.`
+              );
+              return true; // Or return false if missing fields should exclude the doc? Let's be lenient.
+            }
+
+            const documentValue = result[field];
+
+            if (
+              typeof condition === "object" &&
+              condition !== null &&
+              !Array.isArray(condition)
+            ) {
+              // --- Handle Range Object (e.g., { gt: 5.99, lte: 20 }) ---
+              return Object.entries(condition).every(
+                ([operator, filterValue]) => {
+                  // Ensure the document value is comparable (e.g., number for gt/lt)
+                  // Add type checks as needed based on your data
+                  const docNum =
+                    typeof documentValue === "number"
+                      ? documentValue
+                      : parseFloat(documentValue);
+                  const filterNum =
+                    typeof filterValue === "number"
+                      ? filterValue
+                      : parseFloat(filterValue as string);
+
+                  // Basic type check for numeric comparison
+                  if (typeof docNum !== "number" || isNaN(docNum)) {
+                    console.warn(
+                      `Document field "${field}" (value: ${documentValue}) is not a number, cannot apply range operator "${operator}".`
+                    );
+                    return false; // Cannot compare non-numbers with range operators
+                  }
+                  if (typeof filterNum !== "number" || isNaN(filterNum)) {
+                    console.warn(
+                      `Filter value "${filterValue}" for operator "${operator}" on field "${field}" is not a valid number.`
+                    );
+                    return false; // Invalid filter value
+                  }
+
+                  switch (operator) {
+                    case "gt":
+                      return docNum > filterNum;
+                    case "gte":
+                      return docNum >= filterNum;
+                    case "lt":
+                      return docNum < filterNum;
+                    case "lte":
+                      return docNum <= filterNum;
+                    default:
+                      console.warn(`Unsupported filter operator: ${operator}`);
+                      return false; // Unknown operator fails the filter
+                  }
+                }
+              );
+            } else {
+              // --- Handle Exact Match ---
+              // Consider case sensitivity, array contains, etc. if needed
+              return documentValue === condition;
+            }
           });
         }
-      : undefined;
+      : undefined; // No filter if params.filter is not provided
 
     // Basic sorting - MiniSearch primarily sorts by relevance score.
     // Implementing custom sort post-search can be inefficient for large datasets.
