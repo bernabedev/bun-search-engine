@@ -40,7 +40,10 @@ export function IndexCard({
         </div>
         <div className="flex items-center text-sm text-gray-500 mt-1">
           <span className="font-medium">ID Field:</span>
-          <Badge variant="outline" className="ml-2 bg-blue-50">
+          <Badge
+            variant="outline"
+            className="ml-2 bg-blue-50 dark:bg-white/20 dark:border-slate-600 dark:text-blue-100"
+          >
             {index.config.idField}
           </Badge>
         </div>
@@ -53,7 +56,10 @@ export function IndexCard({
               <p className="text-sm font-medium text-gray-700">
                 Indexed Fields
               </p>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+              <Badge
+                variant="secondary"
+                className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100"
+              >
                 {fieldCount}
               </Badge>
             </div>
@@ -62,7 +68,7 @@ export function IndexCard({
                 <Badge
                   key={field}
                   variant="outline"
-                  className="bg-gray-50 hover:bg-gray-100 transition-colors"
+                  className="bg-gray-50 hover:bg-gray-100 transition-colors dark:bg-slate-700 dark:border-slate-600 dark:hover:bg-slate-700"
                 >
                   {field}
                 </Badge>
@@ -85,7 +91,7 @@ export function IndexCard({
                 <Badge
                   key={field}
                   variant="outline"
-                  className="bg-gray-50 hover:bg-gray-100 transition-colors dark:bg-gray-800 dark:hover:bg-gray-700"
+                  className="bg-gray-50 hover:bg-gray-100 transition-colors dark:bg-slate-700 dark:border-slate-600 dark:hover:bg-slate-700"
                 >
                   {field}
                 </Badge>
@@ -95,12 +101,12 @@ export function IndexCard({
         </div>
       </CardContent>
 
-      <CardFooter className="border-t border-slate-100 pt-4 flex justify-between">
+      <CardFooter className="border-t dark:border-slate-700 border-slate-100 pt-4 flex justify-between">
         <Button
           variant="outline"
           size="sm"
           onClick={onSearchClick}
-          className="min-w-36 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+          className="min-w-36 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-800 dark:hover:text-blue-100 transition-colors"
         >
           <Search className="h-4 w-4 mr-2" />
           Search
@@ -110,7 +116,7 @@ export function IndexCard({
           variant="outline"
           size="sm"
           onClick={onManageClick}
-          className="min-w-36 hover:bg-green-50 hover:text-green-700 transition-colors"
+          className="min-w-36 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-800 dark:hover:text-green-100 transition-colors"
         >
           <FileText className="h-4 w-4 mr-2" />
           Manage
@@ -120,7 +126,7 @@ export function IndexCard({
           variant="outline"
           size="sm"
           onClick={onDeleteClick}
-          className="min-w-36 text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+          className="min-w-36 text-red-500 hover:text-red-700 dark:hover:text-red-100 dark:hover:bg-red-800 hover:bg-red-50 transition-colors"
         >
           <Trash2 className="h-4 w-4 mr-2" />
           Delete
