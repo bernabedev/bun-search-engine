@@ -8,7 +8,7 @@ import { setupGracefulShutdown } from "./shutdown";
 import { loadInitialData } from "./startup";
 import { createErrorResponse } from "./utils";
 
-console.log("🚀 Starting Bun Search Engine Server...");
+console.log("🚀 Starting Bunflare Server...");
 
 // --- Main Fetch Handler ---
 async function fetchHandler(
@@ -54,6 +54,17 @@ const server = serve({
   routes: {
     // Serve index.html for all unmatched routes.
     "/dashboard": index,
+    "/public/*": async (req) => {
+      const path = new URL(req.url).pathname;
+      const pwd = process.cwd();
+      console.log(`📂 Requested file: ${path}`);
+      const file = Bun.file(`${pwd}${path}`);
+      console.log(`📂 File exists: ${file.exists()}`);
+      if (!(await file.exists())) {
+        return new Response("Not Found", { status: 404 });
+      }
+      return new Response(file);
+    },
   },
   error(error: Error): Response {
     // Bun's top-level error handler (less likely to be hit with try/catch in fetch)

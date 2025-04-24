@@ -81,12 +81,15 @@ export function DashboardHeader({
   return (
     <header className="bg-white/80 w-full dark:bg-slate-800/80 border border-gray-100 rounded-full dark:border-slate-700 sticky top-4 z-10 backdrop-blur">
       <div className="w-full px-4 py-3 flex justify-between items-center">
-        <div className="flex items-center">
-          <div className="mr-3 md:mr-8">
-            <h1 className="text-xl font-bold text-blue-600 dark:text-blue-400">
-              Bun Search Engine
-            </h1>
+        <div className="flex items-center gap-2">
+          <div className="rounded-full p-1 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-700">
+            <img
+              src="/public/images/bunflare.webp"
+              alt="Bunflare Logo"
+              className="w-8 h-8"
+            />
           </div>
+          <h1 className="text-xl font-bold">Bunflare</h1>
         </div>
 
         {/* Mobile Menu Button */}

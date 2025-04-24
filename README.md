@@ -1,4 +1,4 @@
-# BunJS Search Engine
+# Bunflare
 
 A high-performance, in-memory search engine built with Bun.js, TypeScript, and MiniSearch, following Clean Architecture principles. This project aims to provide a foundational search service with features common in modern search solutions like Algolia, TypeSense, or MeiliSearch.
 
