@@ -79,7 +79,7 @@ export function DashboardHeader({
   };
 
   return (
-    <header className="bg-white w-full dark:bg-slate-800 border border-gray-100 rounded-full dark:border-slate-700 sticky top-0 z-10">
+    <header className="bg-white/80 w-full dark:bg-slate-800/80 border border-gray-100 rounded-full dark:border-slate-700 sticky top-4 z-10 backdrop-blur">
       <div className="w-full px-4 py-3 flex justify-between items-center">
         <div className="flex items-center">
           <div className="mr-3 md:mr-8">
