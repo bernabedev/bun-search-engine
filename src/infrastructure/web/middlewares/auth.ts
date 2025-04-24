@@ -1,6 +1,8 @@
 import { config } from "../config";
 import { UnauthorizedError } from "../errors/api-error";
 
+const publicPaths = ["/", "/dashboard"];
+
 /**
  * Middleware to authenticate requests using the API Key from config.
  * Throws UnauthorizedError if authentication fails.
@@ -8,7 +10,7 @@ import { UnauthorizedError } from "../errors/api-error";
  */
 export function authenticateRequest(request: Request, url: URL): void {
   // Allow public access to the health check endpoint
-  if (url.pathname === "/" && request.method === "GET") {
+  if (publicPaths.includes(url.pathname) && request.method === "GET") {
     return; // Skip authentication for health check
   }
 
