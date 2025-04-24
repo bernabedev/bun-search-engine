@@ -45,3 +45,6 @@ DELETE http://localhost:3000/indexes/books
 Authorization: Bearer your-super-secret-and-strong-api-key
 
 
+### SEARCH PRODUCTS
+GET http://localhost:3000/indexes/products/search?query=iphone&limit=100
+Authorization: Bearer your-super-secret-and-strong-api-key
