@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  search-engine:
+    build: .
+    container_name: bun-search-engine
+    ports:
+      - "3000:3000"
+    environment:
+      SEARCH_API_KEY: ${SEARCH_API_KEY}
+    restart: unless-stopped
