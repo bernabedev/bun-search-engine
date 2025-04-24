@@ -2,6 +2,7 @@ import type { Document } from "@/core/domain/document";
 import type { SearchProvider } from "@/core/ports/search-provider";
 import type {
   IndexConfig,
+  NumericFacetStats,
   SearchParams,
   SearchResponse,
   SuggestParams,
@@ -77,7 +78,7 @@ export class MiniSearchProvider implements SearchProvider {
       throw new Error(`Index "${indexName}" not found.`);
     }
 
-    const { query, offset = 0, limit = 10, filter } = params;
+    const { query, offset = 0, limit = 10, filter, facets } = params;
 
     // Advanced filtering - MiniSearch filter needs a function
     const filterFn = params.filter
@@ -167,6 +168,109 @@ export class MiniSearchProvider implements SearchProvider {
       // for very large result sets but simple for MiniSearch.
     });
 
+    let facetDistribution: Record<string, Record<string, number>> | undefined =
+      undefined;
+    let facetStats: Record<string, NumericFacetStats> | undefined = undefined;
+    if (facets && facets.length > 0 && searchResults.length > 0) {
+      facetDistribution = {};
+      facetStats = {};
+      const numericTrackers: Record<
+        string,
+        {
+          min: number;
+          max: number;
+          sum: number;
+          count: number;
+          isNumeric: boolean;
+          initialized: boolean;
+        }
+      > = {};
+
+      for (const facetField of facets) {
+        // Facet calculation requires the field to be in storeFields
+        if (!config.storeFields.includes(facetField)) {
+          console.warn(
+            `Faceting skipped for field "${facetField}": Not included in index's storeFields.`
+          );
+          continue;
+        }
+
+        // Initialize structures for this facet field
+        facetDistribution[facetField] = {}; // For categorical counts
+        // Prepare tracker for potential numeric stats
+        numericTrackers[facetField] = {
+          min: Infinity,
+          max: -Infinity,
+          sum: 0,
+          count: 0,
+          isNumeric: true,
+          initialized: false,
+        };
+
+        for (const hit of searchResults) {
+          const documentValue = hit[facetField];
+
+          // Skip null or undefined values for faceting
+          if (documentValue === undefined || documentValue === null) {
+            continue;
+          }
+
+          const currentTracker = numericTrackers[facetField];
+
+          // Attempt numeric stats calculation
+          if (currentTracker.isNumeric) {
+            if (typeof documentValue === "number" && !isNaN(documentValue)) {
+              currentTracker.initialized = true; // Mark as having seen at least one number
+              currentTracker.min = Math.min(currentTracker.min, documentValue);
+              currentTracker.max = Math.max(currentTracker.max, documentValue);
+              currentTracker.sum += documentValue;
+              currentTracker.count++;
+            } else {
+              // If we encounter a non-numeric value, this field is not purely numeric
+              // Stop calculating stats for it and rely only on categorical counts
+              currentTracker.isNumeric = false;
+            }
+          }
+
+          // --- Categorical Facet Count ---
+          // Always calculate categorical counts, even for numeric fields (e.g., count of products at $5.99)
+          // Handle potential arrays in the future if needed
+          const stringValue = String(documentValue);
+          facetDistribution[facetField][stringValue] =
+            (facetDistribution[facetField][stringValue] || 0) + 1;
+        } // End loop through hits for this facetField
+
+        // --- Finalize Numeric Stats ---
+        const finalTracker = numericTrackers[facetField];
+        if (
+          finalTracker.isNumeric &&
+          finalTracker.initialized &&
+          finalTracker.count > 0
+        ) {
+          // Calculate avg, handle division by zero just in case (though count > 0 check helps)
+          const avg =
+            finalTracker.count > 0 ? finalTracker.sum / finalTracker.count : 0;
+          facetStats[facetField] = {
+            min: finalTracker.min,
+            max: finalTracker.max,
+            avg: avg,
+            sum: finalTracker.sum,
+            count: finalTracker.count,
+          };
+        }
+
+        // Clean up empty categorical distribution if no values were found
+        if (Object.keys(facetDistribution[facetField]).length === 0) {
+          delete facetDistribution[facetField];
+        }
+      } // End loop through requested facetFields
+
+      // Clean up overall facet/stats objects if they ended up empty
+      if (Object.keys(facetStats).length === 0) facetStats = undefined;
+      if (Object.keys(facetDistribution).length === 0)
+        facetDistribution = undefined;
+    }
+
     const nbHits = searchResults.length;
     const totalPages = Math.ceil(nbHits / limit);
     const page = Math.floor(offset / limit) + 1;
@@ -197,7 +301,8 @@ export class MiniSearchProvider implements SearchProvider {
       processingTimeMs: processingTimeMs,
       totalPages: totalPages,
       page: page,
-      // facetDistribution: {}, // Implement faceting if needed
+      facetDistribution: facetDistribution,
+      facetStats: facetStats,
       exhaustiveNbHits: true, // MiniSearch results are exhaustive
     };
   }

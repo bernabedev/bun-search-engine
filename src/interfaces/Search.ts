@@ -15,8 +15,9 @@ export interface SearchResponse<TDoc = Document> {
   processingTimeMs: number;
   totalPages: number;
   page: number;
-  facetDistribution?: Record<string, Record<string, number>>; // For future faceting
-  exhaustiveNbHits: boolean; // Indicates if nbHits is approximate
+  facetDistribution?: Record<string, Record<string, number>>;
+  facetStats?: Record<string, NumericFacetStats>;
+  exhaustiveNbHits: boolean;
 }
 
 // Standard Suggest API Response Structure
@@ -33,6 +34,7 @@ export interface SearchParams {
   limit?: number;
   filter?: Record<string, any>; // Simple key-value filter for now
   sortBy?: string[]; // e.g., ['year:desc', 'rating:asc'] - Basic support
+  facets?: string[]; // Array of field names to compute facets for
 }
 
 // Parameters for Suggest/Autocomplete requests
@@ -40,4 +42,13 @@ export interface SuggestParams {
   query: string;
   limit?: number;
   filter?: Record<string, any>; // Allow filtering suggestions
+}
+
+// Interface for basic numeric stats
+export interface NumericFacetStats {
+  min: number;
+  max: number;
+  avg: number;
+  sum: number;
+  count: number; // Number of documents with numeric values for this facet
 }

@@ -24,6 +24,7 @@ export async function handleSearch(
     const limit = parseInt(url.searchParams.get("limit") || "10", 10);
     const filter: Record<string, any> = {};
     const filterRegex = /^filter\[([^:]+)(?::(gt|gte|lt|lte))?\]$/;
+    const facets = url.searchParams.getAll("facets") || undefined;
 
     for (const [key, value] of url.searchParams.entries()) {
       const match = key.match(filterRegex);
@@ -57,6 +58,7 @@ export async function handleSearch(
       offset: isNaN(offset) ? 0 : offset,
       limit: isNaN(limit) ? 10 : limit,
       filter: Object.keys(filter).length > 0 ? filter : undefined,
+      facets: facets ? facets : undefined,
       // sortBy: url.searchParams.getAll('sortBy') || undefined // Basic sort support
     };
   } else {
@@ -70,7 +72,13 @@ export async function handleSearch(
         limit: body.limit ?? 10,
         filter: body.filter,
         sortBy: body.sortBy,
+        facets: body.facets,
       };
+      if (params.facets && !Array.isArray(params.facets)) {
+        throw new BadRequestError(
+          'Invalid "facets" field in body: must be an array of strings.'
+        );
+      }
     } catch (error) {
       if (error instanceof SyntaxError)
         throw new BadRequestError("Invalid JSON payload for POST search.");
