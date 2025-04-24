@@ -44,4 +44,22 @@ export interface SearchProvider {
    * Deletes an index.
    */
   deleteIndex(indexName: string): Promise<void>;
+
+  /**
+   * Upserts a document into the index.
+   */
+  upsertDocument(
+    indexName: string,
+    document: Document,
+    config: IndexConfig
+  ): Promise<void>;
+
+  /**
+   * Deletes a document from the index.
+   */
+  deleteDocument(
+    indexName: string,
+    documentId: string,
+    config: IndexConfig
+  ): Promise<boolean>;
 }

@@ -8,4 +8,8 @@ export interface IndexRepository {
   getIndexConfig(indexName: string): Promise<IndexConfig | null>;
   saveIndexConfig(indexName: string, config: IndexConfig): Promise<void>;
   listIndexes(): Promise<string[]>;
+  saveDocument(indexName: string, document: Document): Promise<void>;
+  getDocument(indexName: string, documentId: string): Promise<Document | null>;
+  deleteDocument(indexName: string, documentId: string): Promise<boolean>;
+  deleteIndexData?(indexName: string): Promise<void>;
 }

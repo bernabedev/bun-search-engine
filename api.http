@@ -178,3 +178,78 @@ GET {{baseUrl}}/indexes/products/suggest
     &filter[manufacturer]=Energizer
 Authorization: Bearer {{apiKey}}
 Accept: application/json
+
+###
+
+# ============================================================================== 
+# Document Management API (Authentication Required)
+# ============================================================================== 
+
+# --- ADD DOCUMENT ---
+# @name AddSingleProduct
+# Add one new product document to the 'products' index.
+POST {{baseUrl}}/indexes/products/documents
+Authorization: Bearer {{apiKey}}
+Content-Type: application/json
+
+{
+  "sku": 99901,
+  "name": "Gamma Gadget",
+  "type": "Gadget",
+  "price": 99.99,
+  "description": "A brand new gamma gadget.",
+  "manufacturer": "GadgetCo",
+  "model": "GAMMA-01",
+  "category": [{"id": "catGadget", "name": "Gadgets"}],
+  "upc": "999999999999"
+}
+
+###
+
+# --- GET DOCUMENT ---
+# @name GetSingleProduct
+# Retrieve the product added above (assuming its processed ID becomes 'prod_99901')
+# NOTE: Replace 'prod_99901' if your preprocessing creates a different ID format or if you added a doc with a different SKU.
+GET {{baseUrl}}/indexes/products/documents/prod_99901
+Authorization: Bearer {{apiKey}}
+Accept: application/json
+
+###
+
+# --- UPDATE DOCUMENT ---
+# @name UpdateSingleProduct
+# Update the price and description of the product 'prod_99901'.
+# The full document body is required for PUT (replace).
+PUT {{baseUrl}}/indexes/products/documents/prod_99901
+Authorization: Bearer {{apiKey}}
+Content-Type: application/json
+
+{
+  "id": "prod_99901",
+  "sku": 99901,
+  "name": "Gamma Gadget",
+  "type": "Gadget",
+  "price": 89.95,
+  "description": "An UPDATED gamma gadget with a new lower price.",
+  "manufacturer": "GadgetCo",
+  "model": "GAMMA-01",
+  "category": [{"id": "catGadget", "name": "Gadgets"}],
+  "upc": "999999999999"
+}
+
+###
+
+# --- DELETE DOCUMENT ---
+# @name DeleteSingleProduct
+# Delete the product 'prod_99901'.
+DELETE {{baseUrl}}/indexes/products/documents/prod_99901
+Authorization: Bearer {{apiKey}}
+
+###
+
+# --- GET DELETED DOCUMENT (Should 404) ---
+# @name GetDeletedProduct
+# Attempt to retrieve the deleted product (expected to fail with 404).
+GET {{baseUrl}}/indexes/products/documents/prod_99901
+Authorization: Bearer {{apiKey}}
+Accept: application/json

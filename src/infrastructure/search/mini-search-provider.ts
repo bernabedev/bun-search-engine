@@ -367,4 +367,86 @@ export class MiniSearchProvider implements SearchProvider {
     // Note: This only deletes from the search provider's memory.
     // You'd also need to delete from the persistent repository if applicable.
   }
+
+  async upsertDocument(
+    indexName: string,
+    document: Document,
+    config: IndexConfig
+  ): Promise<void> {
+    const instance = this.searchInstances.get(indexName);
+    if (!instance) {
+      // Or consider auto-creating index? For now, assume index exists.
+      throw new Error(`Index "${indexName}" not found for adding document.`);
+    }
+    const idField = config.idField ?? "id";
+    const documentId = document[idField];
+    if (documentId === undefined || documentId === null) {
+      throw new Error(`Document must have the ID field '${idField}'.`);
+    }
+
+    try {
+      // MiniSearch `add` often implies upsert, but explicit remove can be safer
+      // especially if the document structure affecting indexing changed.
+      // Let's try remove first, then add. Ignore remove error if not found.
+      try {
+        instance.remove({ [idField]: documentId } as any); // Remove existing if present
+      } catch (removeError: any) {
+        // Ignore "document not found" errors during remove for upsert
+        if (!removeError.message?.includes("not found")) {
+          console.warn(
+            `Error removing document ID ${documentId} before upsert (continuing with add):`,
+            removeError
+          );
+        }
+      }
+      instance.add(document); // Add the new/updated document
+      console.debug(
+        `Upserted document ID ${documentId} in index "${indexName}".`
+      );
+    } catch (error) {
+      console.error(
+        `Error upserting document ID ${documentId} in index "${indexName}":`,
+        error
+      );
+      throw error; // Re-throw
+    }
+  }
+
+  async deleteDocument(
+    indexName: string,
+    documentId: string,
+    config: IndexConfig
+  ): Promise<boolean> {
+    const instance = this.searchInstances.get(indexName);
+    if (!instance) {
+      console.warn(
+        `Index "${indexName}" not found for deleting document ID ${documentId}.`
+      );
+      return false; // Index doesn't exist
+    }
+    const idField = config.idField ?? "id";
+    try {
+      // MiniSearch expects an object with the ID field for removal
+      const idObject = { [idField]: documentId };
+      instance.remove(idObject as any);
+      console.debug(
+        `Deleted document ID ${documentId} from index "${indexName}".`
+      );
+      return true; // Assume successful if no error thrown
+    } catch (error: any) {
+      // Check if error indicates document not found
+      if (error.message?.includes("not found")) {
+        console.warn(
+          `Document ID ${documentId} not found in index "${indexName}" for deletion.`
+        );
+        return false;
+      } else {
+        console.error(
+          `Error deleting document ID ${documentId} from index "${indexName}":`,
+          error
+        );
+        throw error; // Re-throw unexpected errors
+      }
+    }
+  }
 }

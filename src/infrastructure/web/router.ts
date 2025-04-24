@@ -1,7 +1,11 @@
 import { NotFoundError } from "./errors/api-error";
 import {
+  handleAddDocument,
+  handleDeleteDocument,
   handleDeleteIndex,
+  handleGetDocument,
   handleIndexDocuments,
+  handleUpdateDocument,
 } from "./handlers/document-handlers";
 import { handleHealthCheck } from "./handlers/health-handler";
 import { handleListIndexes } from "./handlers/index-handlers";
@@ -54,6 +58,25 @@ export async function routeRequest(
       // Suggest: GET /indexes/{indexName}/suggest
       if (action === "suggest" && method === "GET") {
         return handleSuggest(request, indexName, url);
+      }
+
+      if (action === "documents") {
+        const documentId = pathSegments[3]; // Get ID from path if present
+
+        // Add Document: POST /indexes/{indexName}/documents
+        if (!documentId && method === "POST") {
+          return handleAddDocument(request, indexName);
+        }
+
+        // Operations on specific document: /indexes/{indexName}/documents/{documentId}
+        if (documentId) {
+          if (method === "GET")
+            return handleGetDocument(request, indexName, documentId);
+          if (method === "PUT")
+            return handleUpdateDocument(request, indexName, documentId);
+          if (method === "DELETE")
+            return handleDeleteDocument(request, indexName, documentId);
+        }
       }
     }
   }

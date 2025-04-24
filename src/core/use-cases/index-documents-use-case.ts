@@ -55,15 +55,20 @@ export class IndexDocumentsUseCase {
     return { count: documents.length };
   }
 
-  // Optional: Add a method to delete an index
   async deleteIndex(indexName: string): Promise<void> {
     if (!indexName) {
-      throw new Error("Index name is required.");
+      throw new Error("Index name is required for deletion.");
     }
+    // Delete from search provider
     await this.searchProvider.deleteIndex(indexName);
-    // Also delete from repository if needed (InMemory example doesn't have explicit delete)
-    console.log(`Index "${indexName}" deleted from search provider.`);
-    // this.indexRepository.deleteIndexData(indexName); // Implement if needed
-    // this.indexRepository.deleteIndexConfig(indexName); // Implement if needed
+    // Delete data and config from repository
+    if (this.indexRepository.deleteIndexData) {
+      await this.indexRepository.deleteIndexData(indexName);
+    } else {
+      console.warn(
+        "IndexRepository does not implement deleteIndexData. Data might remain."
+      );
+    }
+    console.log(`Index "${indexName}" and its data/config deleted.`);
   }
 }
