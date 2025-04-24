@@ -102,8 +102,8 @@ export function SearchModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-5xl h-[90vh] overflow-y-auto p-6">
-        <DialogHeader className="mb-6">
+      <DialogContent className="max-w-5xl h-[90vh] overflow-y-auto p-6 flex flex-col">
+        <DialogHeader className="h-fit mb-0">
           <DialogTitle className="text-2xl font-bold">
             Search in &apos;{index.name}&apos;
           </DialogTitle>

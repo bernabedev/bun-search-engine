@@ -11,7 +11,7 @@ export function App() {
   const [showForm, setShowForm] = useState(!cookie);
   return (
     <>
-      <div className="absolute inset-0 -z-10 h-full w-full bg-white dark:bg-slate-900 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+      <div className="fixed inset-0 -z-10 h-full w-full bg-white dark:bg-slate-900 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
       <main className="flex flex-col items-center justify-center max-w-6xl mx-auto">
         {showForm && (
           <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
