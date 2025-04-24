@@ -10,6 +10,7 @@ import {
 import { handleHealthCheck } from "./handlers/health-handler";
 import { handleListIndexes } from "./handlers/index-handlers";
 import { handleSearch, handleSuggest } from "./handlers/search-handlers";
+import { handleSystemStats } from "./handlers/system-handler";
 
 /**
  * Maps incoming requests to the appropriate handler based on path and method.
@@ -18,7 +19,6 @@ export async function routeRequest(
   request: Request,
   url: URL
 ): Promise<Response> {
-  const pathSegments = url.pathname.split("/").filter(Boolean);
   const method = request.method;
 
   console.debug(`Routing: ${method} ${url.pathname}`); // More detailed log
@@ -27,6 +27,13 @@ export async function routeRequest(
   if (url.pathname === "/" && method === "GET") {
     return handleHealthCheck(request);
   }
+
+  if (url.pathname === "/system/stats" && method === "GET") {
+    // Note: Authentication middleware already ran before this router function
+    return handleSystemStats(request);
+  }
+
+  const pathSegments = url.pathname.split("/").filter(Boolean);
 
   // --- Index Operations ---
   if (pathSegments[0] === "indexes") {

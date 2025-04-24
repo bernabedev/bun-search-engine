@@ -1,3 +1,5 @@
+import type { SystemStats } from "@/interfaces/system";
+
 export interface IndexConfig {
   idField: string;
   fields: string[];
@@ -115,4 +117,24 @@ export async function deleteIndex(
 
   // In a real app, you would make an actual API call to delete the index
   console.log(`Deleting index ${indexName}`);
+}
+
+export async function fetchSystemStats(apiKey: string): Promise<SystemStats> {
+  const response = await fetch("/system/stats", {
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      Accept: "application/json",
+    },
+  });
+  if (!response.ok) {
+    const errorData = await response
+      .json()
+      .catch(() => ({ message: "Failed to fetch system stats" }));
+    throw new Error(
+      `Error fetching system stats: ${response.status} ${
+        response.statusText
+      } - ${errorData?.error?.message || errorData.message}`
+    );
+  }
+  return await response.json();
 }

@@ -253,3 +253,14 @@ Authorization: Bearer {{apiKey}}
 GET {{baseUrl}}/indexes/products/documents/prod_99901
 Authorization: Bearer {{apiKey}}
 Accept: application/json
+
+###
+# ==============================================================================
+# System API (Authentication Required)
+# ==============================================================================
+
+# @name GetSystemStats
+# Retrieve system resource usage statistics for the server process.
+GET {{baseUrl}}/system/stats
+Authorization: Bearer {{apiKey}}
+Accept: application/json
