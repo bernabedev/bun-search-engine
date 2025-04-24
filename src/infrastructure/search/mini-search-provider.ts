@@ -12,6 +12,7 @@ import MiniSearch, {
   type Options as MiniSearchOptions,
   type SearchResult,
 } from "minisearch";
+import { sortFunction } from "./helpers/sort-helper";
 
 export class MiniSearchProvider implements SearchProvider {
   private searchInstances: Map<string, MiniSearch<Document>> = new Map();
@@ -78,14 +79,14 @@ export class MiniSearchProvider implements SearchProvider {
       throw new Error(`Index "${indexName}" not found.`);
     }
 
-    const { query, offset = 0, limit = 10, filter, facets } = params;
+    const { query, offset = 0, limit = 10, filter, facets, sortBy } = params;
 
     // Advanced filtering - MiniSearch filter needs a function
-    const filterFn = params.filter
+    const filterFn = filter
       ? (result: SearchResult): boolean => {
           // result contains stored fields
-          // Iterate over all filter conditions provided in params.filter
-          return Object.entries(params.filter!).every(([field, condition]) => {
+          // Iterate over all filter conditions provided in filter
+          return Object.entries(filter!).every(([field, condition]) => {
             // Check if the field exists in the document's stored fields
             // Note: Filtering only works reliably on fields included in 'storeFields'
             if (!(field in result)) {
@@ -152,7 +153,7 @@ export class MiniSearchProvider implements SearchProvider {
             }
           });
         }
-      : undefined; // No filter if params.filter is not provided
+      : undefined; // No filter if filter is not provided
 
     // Basic sorting - MiniSearch primarily sorts by relevance score.
     // Implementing custom sort post-search can be inefficient for large datasets.
@@ -271,6 +272,14 @@ export class MiniSearchProvider implements SearchProvider {
         facetDistribution = undefined;
     }
 
+    const sortCompareFn = sortFunction(sortBy || [], config.storeFields);
+    if (sortCompareFn) {
+      console.debug(`Applying custom sort based on: ${sortBy?.join(", ")}`);
+      searchResults.sort(sortCompareFn); // Sort the full results array in place
+    } else {
+      console.debug(`No custom sort applied, using default relevance order.`);
+    }
+
     const nbHits = searchResults.length;
     const totalPages = Math.ceil(nbHits / limit);
     const page = Math.floor(offset / limit) + 1;
@@ -358,21 +367,4 @@ export class MiniSearchProvider implements SearchProvider {
     // Note: This only deletes from the search provider's memory.
     // You'd also need to delete from the persistent repository if applicable.
   }
-
-  // Helper for potential future sorting implementation
-  /*
-    private createSortFunction(sortBy: string[]): (a: SearchResult, b: SearchResult) => number {
-        return (a, b) => {
-            for (const sortField of sortBy) {
-                const [field, direction = 'asc'] = sortField.split(':');
-                const valA = a[field];
-                const valB = b[field];
-
-                if (valA < valB) return direction === 'asc' ? -1 : 1;
-                if (valA > valB) return direction === 'asc' ? 1 : -1;
-            }
-            return 0; // Maintain original order if all sort fields are equal
-        };
-    }
-    */
 }

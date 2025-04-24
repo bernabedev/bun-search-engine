@@ -57,5 +57,6 @@ Authorization: Bearer your-super-secret-and-strong-api-key
   "query": "phone",
   "filter": { "price": { "gt": 0, "lt": 200000 } },
   "limit": 100,
-  "facets": ["manufacturer", "type", "price"]
+  "facets": ["manufacturer", "type", "price"],
+  "sortBy": ["price:asc"]
 }

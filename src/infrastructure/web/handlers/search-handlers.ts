@@ -25,6 +25,7 @@ export async function handleSearch(
     const filter: Record<string, any> = {};
     const filterRegex = /^filter\[([^:]+)(?::(gt|gte|lt|lte))?\]$/;
     const facets = url.searchParams.getAll("facets") || undefined;
+    const sortBy = url.searchParams.getAll("sortBy") || undefined;
 
     for (const [key, value] of url.searchParams.entries()) {
       const match = key.match(filterRegex);
@@ -58,8 +59,8 @@ export async function handleSearch(
       offset: isNaN(offset) ? 0 : offset,
       limit: isNaN(limit) ? 10 : limit,
       filter: Object.keys(filter).length > 0 ? filter : undefined,
+      sortBy: sortBy && sortBy.length > 0 ? sortBy : undefined,
       facets: facets ? facets : undefined,
-      // sortBy: url.searchParams.getAll('sortBy') || undefined // Basic sort support
     };
   } else {
     // POST request
@@ -74,6 +75,23 @@ export async function handleSearch(
         sortBy: body.sortBy,
         facets: body.facets,
       };
+      if (params.sortBy && !Array.isArray(params.sortBy)) {
+        throw new BadRequestError(
+          'Invalid "sortBy" field in body: must be an array of strings (e.g., ["field:asc", "field:desc"]).'
+        );
+      }
+      if (params.sortBy) {
+        for (const sortItem of params.sortBy) {
+          if (
+            typeof sortItem !== "string" ||
+            !sortItem.match(/^[^:]+(:(?:asc|desc))?$/)
+          ) {
+            throw new BadRequestError(
+              `Invalid format in sortBy array: "${sortItem}". Use "fieldName" or "fieldName:asc" or "fieldName:desc".`
+            );
+          }
+        }
+      }
       if (params.facets && !Array.isArray(params.facets)) {
         throw new BadRequestError(
           'Invalid "facets" field in body: must be an array of strings.'
