@@ -10,6 +10,7 @@ RUN bun install --frozen-lockfile
 COPY tsconfig.json ./
 COPY src ./src
 COPY bunfig.toml ./bunfig.toml
+COPY public ./public
 
 # Expose the port the application runs on
 EXPOSE 3000
