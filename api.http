@@ -1,0 +1,180 @@
+
+# REST Client requests for interacting with the Bun Search Engine API.
+
+# --- Variables ---
+# Base URL of the running search engine
+@baseUrl = http://localhost:3000
+
+# API Key - Replace with the value from your .env file (SEARCH_API_KEY)
+@apiKey = your-super-secret-and-strong-api-key
+
+###
+# ==============================================================================
+# Health Check (No Authentication Needed)
+# ==============================================================================
+
+# @name HealthCheck
+# Check if the server is running and accessible.
+GET {{baseUrl}}/
+
+
+###
+# ==============================================================================
+# Index Management API (Authentication Required)
+# ==============================================================================
+
+# @name ListIndexes
+# Retrieve a list of all existing indexes and their configurations.
+GET {{baseUrl}}/indexes
+Authorization: Bearer {{apiKey}}
+Accept: application/json
+
+###
+
+# @name IndexProducts
+# Index new documents or replace existing ones in the 'products' index.
+# Requires a configuration and an array of documents.
+POST {{baseUrl}}/indexes/products
+Authorization: Bearer {{apiKey}}
+Content-Type: application/json
+
+{
+  "config": {
+    "idField": "id",
+    "fields": ["name", "description", "manufacturer", "model", "category_names", "type", "sku_str", "upc"],
+    "storeFields": ["id", "sku", "name", "price", "image", "url", "manufacturer", "model", "type", "description", "category", "upc"]
+  },
+  "documents": [
+    { "sku": 99001, "name": "Test Product Alpha", "type": "Test", "price": 10.99, "description": "A test product for indexing.", "manufacturer": "TesterCorp", "model": "TEST-A", "category": [{"id": "catTest", "name": "Testing"}], "upc": "111111111111"},
+    { "sku": 99002, "name": "Test Product Beta", "type": "Test", "price": 25.50, "description": "Another test product.", "manufacturer": "TesterCorp", "model": "TEST-B", "category": [{"id": "catTest", "name": "Testing"}], "upc": "222222222222"}
+  ]
+}
+
+###
+
+# @name DeleteProductsIndex
+# Delete the 'products' index and all its associated data.
+# NOTE: Use with caution! This action is irreversible without re-indexing.
+DELETE {{baseUrl}}/indexes/products
+Authorization: Bearer {{apiKey}}
+
+
+###
+# ==============================================================================
+# Search API (Authentication Required)
+# ==============================================================================
+
+# @name SearchProductsGET_Basic
+# Perform a basic search query on the 'products' index.
+GET {{baseUrl}}/indexes/products/search?query=battery
+Authorization: Bearer {{apiKey}}
+Accept: application/json
+
+###
+
+# @name SearchProductsGET_WithFilter
+# Search with an exact match filter.
+GET {{baseUrl}}/indexes/products/search
+    ?query=macbook
+    &filter[manufacturer]=Apple
+Authorization: Bearer {{apiKey}}
+Accept: application/json
+
+###
+
+# @name SearchProductsGET_WithRangeFilter
+# Search with a numeric range filter (price greater than 5).
+GET {{baseUrl}}/indexes/products/search
+    ?query=battery
+    &filter[price:gt]=5
+Authorization: Bearer {{apiKey}}
+Accept: application/json
+
+###
+
+# @name SearchProductsGET_WithFacets
+# Search and request facet counts for 'manufacturer' and 'price'.
+GET {{baseUrl}}/indexes/products/search
+    ?query=phone
+    &facets=manufacturer
+    &facets=price
+Authorization: Bearer {{apiKey}}
+Accept: application/json
+
+###
+
+# @name SearchProductsGET_WithSorting
+# Search and sort results by price in descending order.
+GET {{baseUrl}}/indexes/products/search
+    ?query=phone
+    &sortBy=price:desc
+Authorization: Bearer {{apiKey}}
+Accept: application/json
+
+###
+
+# @name SearchProductsGET_Combined
+# Combine multiple parameters: empty query (browse/filter), filter, sort, limit, facets.
+GET {{baseUrl}}/indexes/products/search
+    ?query=phone
+    &limit=5
+    &filter[type]=HardGood
+    &filter[price:lt]=500
+    &sortBy=price:asc
+    &sortBy=name:asc
+    &facets=manufacturer
+Authorization: Bearer {{apiKey}}
+Accept: application/json
+
+###
+
+# @name SearchProductsPOST
+# Perform a search using the POST method, allowing a JSON body for complex parameters.
+POST {{baseUrl}}/indexes/products/search
+Authorization: Bearer {{apiKey}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "query": "console",
+  "limit": 2,
+  "offset": 0,
+  "filter": {
+    "manufacturer": "Sony",
+    "price": { "gte": 450 }
+  },
+  "facets": ["type"],
+  "sortBy": ["price:desc"]
+}
+
+###
+# ==============================================================================
+# Suggest API (Authentication Required)
+# ==============================================================================
+
+# @name SuggestProducts_Basic
+# Get autocomplete suggestions for a partial query.
+GET {{baseUrl}}/indexes/products/suggest?query=macb
+Authorization: Bearer {{apiKey}}
+Accept: application/json
+
+###
+
+# @name SuggestProducts_WithLimit
+# Get suggestions with a specific limit.
+GET {{baseUrl}}/indexes/products/suggest
+    ?query=bat
+    &limit=5
+Authorization: Bearer {{apiKey}}
+Accept: application/json
+
+###
+
+# @name SuggestProducts_WithFilter
+# Get suggestions, potentially filtered (though filter support might be basic in suggest).
+# Example: Suggest batteries specifically from Energizer
+GET {{baseUrl}}/indexes/products/suggest
+    ?query=max
+    &filter[manufacturer]=Energizer
+Authorization: Bearer {{apiKey}}
+Accept: application/json

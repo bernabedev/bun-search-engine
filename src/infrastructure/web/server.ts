@@ -1,4 +1,5 @@
 import { serve, type Server } from "bun";
+import index from "../../dashboard/index.html";
 import { config } from "./config";
 import { ApiError } from "./errors/api-error";
 import { authenticateRequest } from "./middlewares/auth";
@@ -50,6 +51,10 @@ async function fetchHandler(
 const server = serve({
   port: config.port,
   fetch: fetchHandler, // Use the combined handler
+  routes: {
+    // Serve index.html for all unmatched routes.
+    "/dashboard": index,
+  },
   error(error: Error): Response {
     // Bun's top-level error handler (less likely to be hit with try/catch in fetch)
     console.error("💥 Bun Top-Level Server Error:", error);

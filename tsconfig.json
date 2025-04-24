@@ -9,7 +9,8 @@
     "allowJs": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@/components": ["./src/dashboard/components/*"]
     },
 
     // Bundler mode
@@ -27,5 +28,6 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
-  }
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
 }
