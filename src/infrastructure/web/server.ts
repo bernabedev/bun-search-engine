@@ -1,443 +1,70 @@
-import { type Document } from "@/core/domain/document";
-import { IndexDocumentsUseCase } from "@/core/use-cases/index-documents-use-case";
-import { SearchUseCase } from "@/core/use-cases/search-use-case";
-import { SuggestUseCase } from "@/core/use-cases/suggest-use-case";
-import { InMemoryIndexRepository } from "@/infrastructure/persistence/in-memory-index-repository";
-import { MiniSearchProvider } from "@/infrastructure/search/mini-search-provider";
-import type {
-  IndexConfig,
-  SearchParams,
-  SuggestParams,
-} from "@/interfaces/search";
-import {
-  ApiError,
-  BadRequestError,
-  NotFoundError,
-  UnauthorizedError,
-} from "./errors/api-error";
+import { serve, type Server } from "bun";
+import { config } from "./config";
+import { ApiError } from "./errors/api-error";
+import { authenticateRequest } from "./middlewares/auth";
+import { routeRequest } from "./router";
+import { setupGracefulShutdown } from "./shutdown";
+import { loadInitialData } from "./startup";
+import { createErrorResponse } from "./utils";
 
-// --- Environment Variable Setup ---
-const ExpectedApiKey = process.env.SEARCH_API_KEY;
+console.log("🚀 Starting Bun Search Engine Server...");
 
-if (!ExpectedApiKey) {
-  console.error("FATAL ERROR: SEARCH_API_KEY environment variable is not set.");
-  console.error(
-    "The search engine cannot start without an API key for security."
-  );
-  console.error(
-    "Please set the SEARCH_API_KEY environment variable and restart."
-  );
-  process.exit(1); // Exit if the API key is missing
-} else {
-  console.log("SEARCH_API_KEY loaded successfully.");
-}
-
-// --- Dependency Injection Setup ---
-const indexRepository = new InMemoryIndexRepository();
-const searchProvider = new MiniSearchProvider();
-
-const indexDocumentsUseCase = new IndexDocumentsUseCase(
-  indexRepository,
-  searchProvider
-);
-const searchUseCase = new SearchUseCase(searchProvider, indexRepository);
-const suggestUseCase = new SuggestUseCase(searchProvider, indexRepository);
-
-// --- Helper Functions ---
-function createJsonResponse(
-  data: any,
-  status = 200,
-  headers?: HeadersInit
-): Response {
-  return new Response(JSON.stringify(data), {
-    status: status,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      ...(headers || {}),
-    },
-  });
-}
-
-function createErrorResponse(error: unknown): Response {
-  let message = "Internal Server Error";
-  let statusCode = 500;
-
-  if (error instanceof ApiError) {
-    message = error.message;
-    statusCode = error.statusCode;
-  } else if (error instanceof Error) {
-    message = error.message; // Use the actual error message
-    // Log the full error for debugging
-    console.error("Unhandled Error:", error);
-  } else {
-    // Handle non-Error objects thrown
-    console.error("Unknown error object:", error);
-  }
-
-  return createJsonResponse({ error: { message, statusCode } }, statusCode);
-}
-
-// --- Authorization Middleware Logic ---
-function authenticateRequest(request: Request, url: URL): void {
-  // Allow public access to the health check endpoint
-  if (url.pathname === "/" && request.method === "GET") {
-    return; // Skip authentication for health check
-  }
-
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    throw new UnauthorizedError(
-      'Missing or malformed Authorization header. Use "Bearer YOUR_API_KEY".'
-    );
-  }
-
-  const providedKey = authHeader.substring(7); // Remove "Bearer " prefix
-
-  if (providedKey !== ExpectedApiKey) {
-    throw new UnauthorizedError("Invalid API Key.");
-  }
-
-  // If we reach here, the key is valid
-  console.log("API Key authenticated successfully.");
-}
-
-// --- Request Handling Logic ---
-
-async function handleIndexRequest(
+// --- Main Fetch Handler ---
+async function fetchHandler(
   request: Request,
-  indexName: string
+  server: Server
 ): Promise<Response> {
-  if (request.method !== "POST")
-    throw new BadRequestError("Method Not Allowed");
+  const url = new URL(request.url);
+  const start = performance.now(); // Start timer for request duration
 
   try {
-    const payload: { documents: Document[]; config: IndexConfig } =
-      await request.json();
-    if (!payload || !payload.documents || !payload.config) {
-      throw new BadRequestError(
-        'Invalid payload: "documents" and "config" fields are required.'
-      );
-    }
+    // 1. Authentication Middleware
+    authenticateRequest(request, url); // Throws error if invalid
 
-    const result = await indexDocumentsUseCase.execute(
-      indexName,
-      payload.documents,
-      payload.config
-    );
-    return createJsonResponse(
-      {
-        message: `Successfully indexed ${result.count} documents into index "${indexName}".`,
-      },
-      201
-    );
-  } catch (error) {
-    // Catch specific errors if needed, e.g., validation errors
-    if (error instanceof SyntaxError) {
-      // Bad JSON
-      throw new BadRequestError("Invalid JSON payload.");
-    }
-    throw error; // Re-throw other errors to be caught by the main handler
-  }
-}
+    // 2. Routing
+    const response = await routeRequest(request, url); // Throws error if not found or handler fails
 
-async function handleSearchRequest(
-  request: Request,
-  indexName: string,
-  url: URL
-): Promise<Response> {
-  if (request.method !== "GET" && request.method !== "POST")
-    throw new BadRequestError("Method Not Allowed"); // Allow POST for complex queries
-
-  let params: SearchParams;
-
-  if (request.method === "GET") {
-    const query = url.searchParams.get("query");
-    if (!query)
-      throw new BadRequestError("Missing required query parameter: query");
-
-    const offset = parseInt(url.searchParams.get("offset") || "0", 10);
-    const limit = parseInt(url.searchParams.get("limit") || "10", 10);
-    // Basic filter parsing (e.g., filter[genre]=Action&filter[year]=1994)
-    const filter: Record<string, any> = {};
-    for (const [key, value] of url.searchParams.entries()) {
-      if (key.startsWith("filter[")) {
-        const filterKey = key.substring(7, key.length - 1); // Extract key between brackets
-        // Basic type inference (can be more robust)
-        if (!isNaN(Number(value))) {
-          filter[filterKey] = Number(value);
-        } else if (
-          value.toLowerCase() === "true" ||
-          value.toLowerCase() === "false"
-        ) {
-          filter[filterKey] = value.toLowerCase() === "true";
-        } else {
-          filter[filterKey] = value;
-        }
-      }
-    }
-
-    params = {
-      query,
-      offset: isNaN(offset) ? 0 : offset,
-      limit: isNaN(limit) ? 10 : limit,
-      filter: Object.keys(filter).length > 0 ? filter : undefined,
-      // sortBy: url.searchParams.getAll('sortBy') || undefined // Basic sort support
-    };
-  } else {
-    // POST request
-    try {
-      const body = await request.json();
-      if (!body.query)
-        throw new BadRequestError("Missing required field in body: query");
-      params = {
-        query: body.query,
-        offset: body.offset ?? 0,
-        limit: body.limit ?? 10,
-        filter: body.filter,
-        sortBy: body.sortBy,
-      };
-    } catch (error) {
-      if (error instanceof SyntaxError)
-        throw new BadRequestError("Invalid JSON payload for POST search.");
-      throw error;
-    }
-  }
-
-  const results = await searchUseCase.execute(indexName, params);
-  return createJsonResponse(results);
-}
-
-async function handleSuggestRequest(
-  request: Request,
-  indexName: string,
-  url: URL
-): Promise<Response> {
-  if (request.method !== "GET") throw new BadRequestError("Method Not Allowed");
-
-  const query = url.searchParams.get("query");
-  if (!query)
-    throw new BadRequestError("Missing required query parameter: query");
-
-  const limit = parseInt(url.searchParams.get("limit") || "5", 10);
-  // Basic filter parsing (similar to search)
-  const filter: Record<string, any> = {};
-  for (const [key, value] of url.searchParams.entries()) {
-    if (key.startsWith("filter[")) {
-      const filterKey = key.substring(7, key.length - 1);
-      if (!isNaN(Number(value))) filter[filterKey] = Number(value);
-      else if (
-        value.toLowerCase() === "true" ||
-        value.toLowerCase() === "false"
-      )
-        filter[filterKey] = value.toLowerCase() === "true";
-      else filter[filterKey] = value;
-    }
-  }
-
-  const params: SuggestParams = {
-    query,
-    limit: isNaN(limit) ? 5 : limit,
-    filter: Object.keys(filter).length > 0 ? filter : undefined,
-  };
-
-  const results = await suggestUseCase.execute(indexName, params);
-  return createJsonResponse(results);
-}
-
-async function handleListIndexesRequest(request: Request): Promise<Response> {
-  if (request.method !== "GET") throw new BadRequestError("Method Not Allowed");
-  const indexNames = await indexRepository.listIndexes();
-  const configs = await Promise.all(
-    indexNames.map((name) =>
-      indexRepository.getIndexConfig(name).then((config) => ({ name, config }))
-    )
-  );
-  return createJsonResponse(configs);
-}
-
-// --- Main Server Logic ---
-console.log("Starting Bun Search Engine Server...");
-
-const server = Bun.serve({
-  port: process.env.PORT || 3000,
-  async fetch(request: Request): Promise<Response> {
-    const url = new URL(request.url);
-    const pathSegments = url.pathname.split("/").filter(Boolean); // Filter empty segments
-
-    try {
-      console.log(
-        `[${new Date().toISOString()}] ${request.method} ${url.pathname}${
-          url.search
-        }`
-      );
-
-      // --- Authentication Middleware ---
-      authenticateRequest(request, url);
-
-      // --- Routing ---
-      if (pathSegments[0] === "indexes") {
-        if (pathSegments.length === 1 && request.method === "GET") {
-          // GET /indexes - List all indexes and their configs
-          return await handleListIndexesRequest(request);
-        }
-        if (pathSegments.length >= 2) {
-          const indexName = pathSegments[1];
-          const action = pathSegments[2]; // e.g., 'search', 'suggest'
-
-          if (!action && request.method === "POST") {
-            // POST /indexes/{indexName} - Index documents
-            return await handleIndexRequest(request, indexName);
-          }
-          if (action === "search") {
-            // GET or POST /indexes/{indexName}/search
-            return await handleSearchRequest(request, indexName, url);
-          }
-          if (action === "suggest") {
-            // GET /indexes/{indexName}/suggest
-            return await handleSuggestRequest(request, indexName, url);
-          }
-          if (!action && request.method === "DELETE") {
-            // DELETE /indexes/{indexName} - Delete an index
-            await indexDocumentsUseCase.deleteIndex(indexName);
-            return createJsonResponse(
-              { message: `Index "${indexName}" deleted successfully.` },
-              200
-            );
-          }
-        }
-      }
-
-      // --- Basic Health Check / Root ---
-      if (url.pathname === "/" && request.method === "GET") {
-        return createJsonResponse({
-          status: "ok",
-          message: "Bun Search Engine is running!",
-        });
-      }
-
-      // --- Default: Not Found ---
-      throw new NotFoundError(
-        `Route not found: ${request.method} ${url.pathname}`
-      );
-    } catch (error) {
-      return createErrorResponse(error);
-    }
-  },
-  error(error: Error): Response {
-    // Bun's top-level error handler
-    console.error("Server Error:", error);
-    return createErrorResponse(error);
-  },
-});
-
-console.log(`🚀 Server listening on http://localhost:${server.port}`);
-
-// --- Graceful Shutdown ---
-process.on("SIGINT", () => {
-  console.log("\nGracefully shutting down...");
-  server.stop(true); // true = wait for connections to close
-  // Add any cleanup logic here (e.g., persisting in-memory data if needed)
-  console.log("Server stopped.");
-  process.exit(0);
-});
-
-process.on("SIGTERM", () => {
-  console.log("Received SIGTERM, shutting down gracefully...");
-  server.stop(true);
-  console.log("Server stopped.");
-  process.exit(0);
-});
-
-// Load initial data on startup (optional)
-async function loadInitialData() {
-  try {
-    console.log("Loading initial data...");
-
-    // --- URL for the products data ---
-    const productsUrl =
-      "https://ka0qscxi58.ufs.sh/f/XtLLY2rlsfUdYzxV1quOc4ARQPlSWkayrbm6H0FZX2p1gsoz";
-
-    // --- Fetch data from the URL ---
-    // Assuming a fetch-like mechanism is available in this environment
-    // If not, this part would need adaptation based on the specific environment's capabilities
-    console.log(`Workspaceing data from: ${productsUrl}`);
-    const response = await fetch(productsUrl);
-
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch data: ${response.status} ${response.statusText}`
-      );
-    }
-
-    let productsData: Document[] = await response.json();
-
-    const indexName = "products"; // Changed index name
-
-    // --- Define the Index Configuration for Products ---
-    const productConfig: IndexConfig = {
-      // Use a new string field for the ID, as MiniSearch prefers strings
-      idField: "id", // We will create this 'id' field from 'sku'
-      fields: [
-        "name", // Search by product name
-        "description", // Search within description
-        "manufacturer", // Search by manufacturer
-        "model", // Search by model number
-        "category_names", // Search within category names (we'll create this)
-        "type", // Search by product type (e.g., HardGood)
-        "sku_str", // Allow searching by SKU as text
-        "upc", // Allow searching by UPC
-      ],
-      storeFields: [
-        // Fields to return in the search results
-        "id", // Return the string ID
-        "sku", // Return original SKU number
-        "name",
-        "price",
-        "image",
-        "url",
-        "manufacturer",
-        "model",
-        "type",
-        "description", // Return description for display if needed
-        "category", // Return the original category structure
-        "upc",
-      ],
-    };
-
-    // --- Preprocess data for indexing ---
-    // MiniSearch works best with string IDs and benefits from flattened arrays for text search.
-    const processedProducts = productsData.map((product) => {
-      // 1. Create a stable string ID from SKU
-      const stringId = `prod_${product.sku}`;
-      // 2. Create a searchable string/array of category names
-      const categoryNames =
-        product.category?.map(
-          (cat: { id: string; name: string }) => cat.name
-        ) || [];
-      // 3. Convert SKU to string for potential text searching
-      const skuStr = String(product.sku);
-
-      return {
-        ...product, // Keep original fields
-        id: stringId, // Add the new string ID for MiniSearch idField
-        category_names: categoryNames, // Add flattened category names for searching
-        sku_str: skuStr, // Add SKU as a string for searching
-      };
-    });
-
-    // Execute indexing with processed data and config
-    await indexDocumentsUseCase.execute(
-      indexName,
-      processedProducts,
-      productConfig
-    );
+    // Log successful request duration
+    const duration = Math.round(performance.now() - start);
     console.log(
-      `Successfully loaded and indexed ${processedProducts.length} products into '${indexName}' index.`
+      `➡️ ${request.method} ${url.pathname}${url.search} - ${response.status} (${duration}ms)`
     );
+
+    return response;
   } catch (error) {
-    console.error("Error loading initial data:", error);
+    // Handle errors from authentication, routing, or handlers
+    const errorResponse = createErrorResponse(error);
+    // Log error request duration
+    const duration = Math.round(performance.now() - start);
+    let logPrefix = "⚠️";
+    if (error instanceof ApiError && error.statusCode >= 500) logPrefix = "💥";
+    console.log(
+      `${logPrefix} ${request.method} ${url.pathname}${url.search} - ${errorResponse.status} (${duration}ms)`
+    );
+
+    return errorResponse;
   }
 }
 
-// Load data after the server starts listening
+// --- Bun Server Initialization ---
+const server = serve({
+  port: config.port,
+  fetch: fetchHandler, // Use the combined handler
+  error(error: Error): Response {
+    // Bun's top-level error handler (less likely to be hit with try/catch in fetch)
+    console.error("💥 Bun Top-Level Server Error:", error);
+    // Use our standard error response format
+    return createErrorResponse(
+      new Error("An unexpected server error occurred.")
+    );
+  },
+});
+
+console.log(`✅ Server listening on http://localhost:${server.port}`);
+
+// --- Setup Graceful Shutdown ---
+setupGracefulShutdown(server);
+
+// --- Load Initial Data (Asynchronously) ---
+// Run after server starts listening so it doesn't block startup
 loadInitialData();

@@ -48,3 +48,13 @@ Authorization: Bearer your-super-secret-and-strong-api-key
 ### SEARCH PRODUCTS
 GET http://localhost:3000/indexes/products/search?query=iphone&limit=100
 Authorization: Bearer your-super-secret-and-strong-api-key
+
+### SEARCH PRODUCTS WITH FILTER
+POST http://localhost:3000/indexes/products/search
+Authorization: Bearer your-super-secret-and-strong-api-key
+
+{
+  "query": "phone",
+  "filter": { "price": { "gt": 0, "lt": 200000 } },
+  "limit": 100
+}
