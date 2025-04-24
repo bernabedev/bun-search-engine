@@ -39,7 +39,7 @@ export interface SearchResult {
 export const getCookie = () =>
   document.cookie
     .split(";")
-    .find((cookie) => cookie.startsWith(" api-key="))
+    .find((cookie) => cookie.startsWith("api-key="))
     ?.split("=")[1];
 
 function http(
