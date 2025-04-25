@@ -2,13 +2,19 @@ import type { Document } from "@/core/domain/document";
 import type { IndexRepository } from "@/core/ports/index-repository";
 import type { SearchProvider } from "@/core/ports/search-provider";
 import type { SearchParams, SearchResponse } from "@/interfaces/search";
+import type { SynonymRepository } from "../ports/synonym-repository";
 
 export class SearchUseCase {
   constructor(
     private readonly searchProvider: SearchProvider,
-    private readonly indexRepository: IndexRepository // Needed to get config
+    private readonly indexRepository: IndexRepository,
+    private readonly synonymRepository: SynonymRepository
   ) {}
 
+  private normalizeWord(word: string): string {
+    // Consistent normalization
+    return word.trim().toLowerCase();
+  }
   async execute<TDoc extends Document = Document>(
     indexName: string,
     params: SearchParams
@@ -58,7 +64,46 @@ export class SearchUseCase {
       }
     }
 
+    // --- Synonym Query Expansion ---
+    let finalQuery = params.query ?? "";
+    if (finalQuery.trim() !== "") {
+      // Only expand non-empty queries
+      const queryTerms = finalQuery.split(/\s+/); // Simple space split
+      const expandedTerms = new Set<string>(); // Use Set to avoid duplicate terms
+
+      for (const term of queryTerms) {
+        const normalizedTerm = this.normalizeWord(term);
+        if (!normalizedTerm) continue;
+
+        const synonyms = await this.synonymRepository.findSynonyms(
+          normalizedTerm
+        );
+        if (synonyms) {
+          // Add all synonyms (including original term) to the expanded set
+          synonyms.forEach((syn) => expandedTerms.add(syn));
+        } else {
+          // If no synonyms, add the original normalized term
+          expandedTerms.add(normalizedTerm);
+        }
+      }
+
+      // Reconstruct the query string with expanded terms
+      if (expandedTerms.size > 0) {
+        finalQuery = Array.from(expandedTerms).join(" ");
+        console.debug(`Expanded query: "${params.query}" -> "${finalQuery}"`);
+      }
+    }
+
+    const finalParams: SearchParams = {
+      ...params,
+      query: finalQuery,
+    };
+
     // Execute search
-    return await this.searchProvider.search<TDoc>(indexName, params, config);
+    return await this.searchProvider.search<TDoc>(
+      indexName,
+      finalParams,
+      config
+    );
   }
 }

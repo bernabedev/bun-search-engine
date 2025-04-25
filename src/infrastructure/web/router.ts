@@ -10,6 +10,11 @@ import {
 import { handleHealthCheck } from "./handlers/health-handler";
 import { handleListIndexes } from "./handlers/index-handlers";
 import { handleSearch, handleSuggest } from "./handlers/search-handlers";
+import {
+  handleAddSynonyms,
+  handleDeleteSynonym,
+  handleListSynonyms,
+} from "./handlers/synonym-handlers";
 import { handleSystemStats } from "./handlers/system-handler";
 
 /**
@@ -34,6 +39,24 @@ export async function routeRequest(
   }
 
   const pathSegments = url.pathname.split("/").filter(Boolean);
+
+  // --- Synonym Routes ---
+  if (pathSegments[0] === "synonyms") {
+    const word = pathSegments[1]; // Get word from path if present
+
+    // List Synonyms: GET /synonyms
+    if (!word && method === "GET") {
+      return handleListSynonyms(request);
+    }
+    // Add Synonym Group: POST /synonyms
+    if (!word && method === "POST") {
+      return handleAddSynonyms(request);
+    }
+    // Delete Synonym: DELETE /synonyms/{word}
+    if (word && method === "DELETE") {
+      return handleDeleteSynonym(request, word);
+    }
+  }
 
   // --- Index Operations ---
   if (pathSegments[0] === "indexes") {

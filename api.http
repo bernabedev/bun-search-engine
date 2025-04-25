@@ -280,3 +280,78 @@ Accept: application/json
 GET {{baseUrl}}/system/stats
 Authorization: Bearer {{apiKey}}
 Accept: application/json
+
+###
+# ==============================================================================
+# Synonym Management API (Authentication Required)
+# ==============================================================================
+
+# @name AddSynonymGroup
+# Add a synonym group for "colchon" and "cochones"
+POST {{baseUrl}}/synonyms
+Authorization: Bearer {{apiKey}}
+Content-Type: application/json
+
+{
+  "words": ["colchon", "cochones", "colchón"]
+}
+
+###
+
+# @name AddAnotherSynonymGroup
+# Add a different group
+POST {{baseUrl}}/synonyms
+Authorization: Bearer {{apiKey}}
+Content-Type: application/json
+
+{
+  "words": ["bateria", "battery"]
+}
+
+
+###
+
+# @name ListAllSynonyms
+# Get all defined synonym groups
+GET {{baseUrl}}/synonyms
+Authorization: Bearer {{apiKey}}
+Accept: application/json
+
+###
+
+# --- SEARCH WITH SYNONYMS ---
+
+# @name SearchWithSynonym_Colchon
+# Search for "colchon" - should also find results for "cochones" or "colchón" now
+GET {{baseUrl}}/indexes/products/search?query=colchon
+Authorization: Bearer {{apiKey}}
+Accept: application/json
+
+###
+
+# @name SearchWithSynonym_Bateria
+# Search for "bateria" - should also find results for "battery"
+# Use a relevant index name if 'products' doesn't contain batteries
+GET {{baseUrl}}/indexes/products/search?query=bateria
+Authorization: Bearer {{apiKey}}
+Accept: application/json
+
+
+###
+
+# --- DELETE SYNONYM ---
+
+# @name DeleteSynonym_Pila
+# Delete the word "pila" and its associations
+DELETE {{baseUrl}}/synonyms/pila
+Authorization: Bearer {{apiKey}}
+
+###
+
+# @name ListSynonymsAfterDelete
+# Verify "pila" is gone and "bateria" is no longer a group (or is gone if it was the only other word)
+GET {{baseUrl}}/synonyms
+Authorization: Bearer {{apiKey}}
+Accept: application/json
+
+###
