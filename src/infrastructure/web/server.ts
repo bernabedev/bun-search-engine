@@ -78,4 +78,4 @@ setupGracefulShutdown(server);
 
 // --- Load Initial Data (Asynchronously) ---
 // Run after server starts listening so it doesn't block startup
-loadInitialData();
+if (config.loadDemoData) loadInitialData();

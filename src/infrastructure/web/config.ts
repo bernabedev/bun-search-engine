@@ -1,5 +1,6 @@
 const ExpectedApiKey = process.env.SEARCH_API_KEY;
 const GeminiApiKey = process.env.GEMINI_API_KEY;
+const LoadDemoData = process.env.LOAD_DEMO_DATA;
 
 if (!ExpectedApiKey) {
   console.error(
@@ -23,8 +24,17 @@ if (!GeminiApiKey) {
   console.log("✅ GEMINI_API_KEY loaded.");
 }
 
+if (!LoadDemoData) {
+  console.warn(
+    "🟡 LOAD_DEMO_DATA environment variable is not set. Demo data will not be loaded."
+  );
+} else {
+  console.log("✅ LOAD_DEMO_DATA loaded.");
+}
+
 export const config = {
   apiKey: ExpectedApiKey,
   port: process.env.PORT || 3000,
   geminiApiKey: GeminiApiKey,
+  loadDemoData: LoadDemoData === "true",
 };
