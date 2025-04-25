@@ -1,4 +1,4 @@
-import { serve, type Server } from "bun";
+import { serve } from "bun";
 import index from "../../dashboard/index.html";
 import { config } from "./config";
 import { ApiError } from "./errors/api-error";
@@ -11,10 +11,7 @@ import { createErrorResponse } from "./utils";
 console.log("🚀 Starting Bunflare Server...");
 
 // --- Main Fetch Handler ---
-async function fetchHandler(
-  request: Request,
-  server: Server
-): Promise<Response> {
+async function fetchHandler(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const start = performance.now(); // Start timer for request duration
 
