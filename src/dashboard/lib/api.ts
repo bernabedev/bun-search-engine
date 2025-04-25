@@ -14,7 +14,7 @@ export interface Index {
 // Search types
 export interface SearchParams {
   query?: string;
-  filters?: Record<string, string>;
+  filter?: Record<string, string>;
   sortBy?: string[]; // ["price:desc"]
   offset?: number;
   limit?: number;

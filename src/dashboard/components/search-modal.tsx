@@ -61,9 +61,14 @@ export function SearchModal({
   const handleSearch = async () => {
     setIsLoading(true);
     try {
+      const rawFilters = Object.fromEntries(
+        Object.entries(filters).filter(
+          ([_, value]) => value !== "" && value != null
+        )
+      );
       const searchParams = {
         query,
-        filters,
+        filter: rawFilters,
         sortBy: sortField ? [`${sortField}:${sortDirection}`] : undefined,
         offset: (page - 1) * 10,
         limit: 10,
