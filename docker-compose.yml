@@ -3,7 +3,7 @@ version: "3.8"
 services:
   search-engine:
     build: .
-    container_name: bun-search-engine
+    container_name: bunflare
     ports:
       - "3000:3000"
     environment:
