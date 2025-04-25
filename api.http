@@ -15,7 +15,7 @@
 
 # @name HealthCheck
 # Check if the server is running and accessible.
-GET {{baseUrl}}/
+GET {{baseUrl}}/health
 
 
 ###
