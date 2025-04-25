@@ -24,7 +24,7 @@ export async function routeRequest(
   console.debug(`Routing: ${method} ${url.pathname}`); // More detailed log
 
   // --- Health Check ---
-  if (url.pathname === "/" && method === "GET") {
+  if (url.pathname === "/health" && method === "GET") {
     return handleHealthCheck(request);
   }
 

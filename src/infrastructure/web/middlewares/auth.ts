@@ -1,7 +1,7 @@
 import { config } from "../config";
 import { UnauthorizedError } from "../errors/api-error";
 
-const publicPaths = ["/", "/dashboard"];
+const publicPaths = ["/", "/health"];
 
 /**
  * Middleware to authenticate requests using the API Key from config.

@@ -53,13 +53,11 @@ const server = serve({
   fetch: fetchHandler, // Use the combined handler
   routes: {
     // Serve index.html for all unmatched routes.
-    "/dashboard": index,
+    "/": index,
     "/public/*": async (req) => {
       const path = new URL(req.url).pathname;
       const pwd = process.cwd();
-      console.log(`📂 Requested file: ${path}`);
       const file = Bun.file(`${pwd}${path}`);
-      console.log(`📂 File exists: ${file.exists()}`);
       if (!(await file.exists())) {
         return new Response("Not Found", { status: 404 });
       }
