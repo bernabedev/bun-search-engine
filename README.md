@@ -47,7 +47,7 @@ The project follows Clean Architecture principles:
 
 1.  Clone the repository:
     ```bash
-    git clone https://github.com/bernabedev/bun-search-engine.git
+    git clone https://github.com/bernabedev/bunflare.git
     cd bun-search-engine
     ```
 2.  Install dependencies:
