@@ -1,5 +1,21 @@
 {
-  "name": "bun-search-engine",
+  "name": "bunflare",
+  "version": "0.0.1",
+  "description": "A high-performance, in-memory search engine built with Bun.js, TypeScript, and MiniSearch.",
+  "author": "Freilyn Bernabé <freilyn@bernabe.dev>",
+  "url": "https://github.com/bernabedev/bunflare#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bernabedev/bunflare.git"
+  },
+  "homepage": "https://github.com/bernabedev/bunflare#readme",
+  "keywords": [
+    "bun",
+    "typescript",
+    "react",
+    "miniSearch"
+  ],
+  "license": "MIT",
   "module": "index.ts",
   "type": "module",
   "scripts": {
