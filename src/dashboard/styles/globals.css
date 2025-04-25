@@ -41,7 +41,7 @@
 }
 
 .dark {
-  --background: hsl(240 10% 3.9%);
+  --background: hsl(222.33deg 49.39% 11.3%);
   --foreground: hsl(0 0% 98%);
   --card: hsl(240 10% 3.9%);
   --card-foreground: hsl(0 0% 98%);
@@ -57,7 +57,7 @@
   --accent-foreground: hsl(0 0% 98%);
   --destructive: hsl(0 62.8% 30.6%);
   --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(240 3.7% 15.9%);
+  --border: hsl(215.28deg 27.94% 26.85%);
   --input: hsl(240 3.7% 15.9%);
   --ring: hsl(240 4.9% 83.9%);
   --chart-1: hsl(220 70% 50%);

@@ -16,7 +16,7 @@ export interface SearchParams {
   query?: string;
   filters?: Record<string, string>;
   sortBy?: string[]; // ["price:desc"]
-  page?: number;
+  offset?: number;
   limit?: number;
 }
 

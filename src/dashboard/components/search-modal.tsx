@@ -65,7 +65,7 @@ export function SearchModal({
         query,
         filters,
         sortBy: sortField ? [`${sortField}:${sortDirection}`] : undefined,
-        page,
+        offset: (page - 1) * 10,
         limit: 10,
       };
 
@@ -183,7 +183,7 @@ export function SearchModal({
 
             {results && (
               <div className="space-y-4">
-                <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                <div className="flex justify-between items-center bg-gray-50 dark:bg-slate-800 p-3 rounded-lg">
                   <p className="text-sm font-medium">
                     {results.nbHits} results found in {results.processingTimeMs}
                     ms
@@ -226,10 +226,7 @@ export function SearchModal({
                 <div className="space-y-4">
                   {results.hits.length > 0 ? (
                     results.hits.map((hit) => (
-                      <Card
-                        key={hit.id}
-                        className="overflow-hidden border-l-4 border-l-blue-500"
-                      >
+                      <Card key={hit.id} className="overflow-hidden">
                         <CardContent className="p-4">
                           <div className="grid grid-cols-1 gap-3">
                             {Object.entries(hit).map(([key, value]) => {
@@ -240,10 +237,7 @@ export function SearchModal({
                                 hit._highlight && hit._highlight[key];
 
                               return (
-                                <div
-                                  key={key}
-                                  className="border-b border-gray-100 pb-2"
-                                >
+                                <div key={key} className="border-b pb-2">
                                   <span className="text-xs uppercase tracking-wider font-semibold text-gray-500 mb-1 block">
                                     {key}
                                   </span>
@@ -284,9 +278,9 @@ export function SearchModal({
           </div>
 
           <div className="md:border-l md:pl-6">
-            <div className="bg-gray-50 p-4 rounded-lg sticky top-4">
+            <Card className="bg-gray-50 p-4 rounded-lg sticky top-4">
               <Tabs defaultValue="filters" className="w-full">
-                <TabsList className="w-full mb-4 grid grid-cols-3">
+                <TabsList className="w-full mb-4">
                   <TabsTrigger value="filters" className="flex-1">
                     <SlidersHorizontal className="h-4 w-4 mr-2" />
                     Filters
@@ -458,7 +452,7 @@ export function SearchModal({
                   </TabsContent>
                 )}
               </Tabs>
-            </div>
+            </Card>
           </div>
         </div>
       </DialogContent>
