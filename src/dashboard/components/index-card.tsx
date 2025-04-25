@@ -39,7 +39,7 @@ export function IndexCard({
           </CardTitle>
         </div>
         <div className="flex items-center text-sm text-gray-500 mt-1">
-          <span className="font-medium">ID Field:</span>
+          <span className="text-slate-500">ID Field:</span>
           <Badge
             variant="outline"
             className="ml-2 bg-blue-50 dark:bg-white/20 dark:border-slate-600 dark:text-blue-100"
@@ -53,12 +53,10 @@ export function IndexCard({
         <div className="space-y-4">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <p className="text-sm font-medium text-gray-700">
-                Indexed Fields
-              </p>
+              <p className="text-sm text-slate-500">Indexed Fields</p>
               <Badge
                 variant="secondary"
-                className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100"
+                className="bg-blue-100  text-blue-800 "
               >
                 {fieldCount}
               </Badge>
@@ -78,7 +76,7 @@ export function IndexCard({
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <p className="text-sm font-medium text-gray-700">Stored Fields</p>
+              <p className="text-sm text-slate-500">Stored Fields</p>
               <Badge
                 variant="secondary"
                 className="bg-green-100 text-green-800"
