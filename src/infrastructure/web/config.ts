@@ -1,4 +1,5 @@
 const ExpectedApiKey = process.env.SEARCH_API_KEY;
+const GeminiApiKey = process.env.GEMINI_API_KEY;
 
 if (!ExpectedApiKey) {
   console.error(
@@ -14,7 +15,16 @@ if (!ExpectedApiKey) {
   console.log("✅ SEARCH_API_KEY loaded successfully.");
 }
 
+if (!GeminiApiKey) {
+  console.warn(
+    "🟡 GEMINI_API_KEY environment variable is not set. AI config generation endpoint will be disabled."
+  );
+} else {
+  console.log("✅ GEMINI_API_KEY loaded.");
+}
+
 export const config = {
   apiKey: ExpectedApiKey,
   port: process.env.PORT || 3000,
+  geminiApiKey: GeminiApiKey,
 };

@@ -1,4 +1,5 @@
 import { NotFoundError } from "./errors/api-error";
+import { handleGenerateConfig } from "./handlers/ai-handler";
 import {
   handleAddDocument,
   handleDeleteDocument,
@@ -36,6 +37,11 @@ export async function routeRequest(
   if (url.pathname === "/system/stats" && method === "GET") {
     // Note: Authentication middleware already ran before this router function
     return handleSystemStats(request);
+  }
+
+  // --- AI Routes ---
+  if (url.pathname === "/ai/generate-config" && method === "POST") {
+    return handleGenerateConfig(request);
   }
 
   const pathSegments = url.pathname.split("/").filter(Boolean);

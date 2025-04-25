@@ -355,3 +355,45 @@ Authorization: Bearer {{apiKey}}
 Accept: application/json
 
 ###
+
+###
+# ==============================================================================
+# AI Index Configuration API (Authentication Required)
+# ==============================================================================
+
+# @name GenerateConfigAI
+# Use AI (Gemini) to suggest an index configuration based on a sample document.
+# Requires GEMINI_API_KEY to be set on the server.
+POST {{baseUrl}}/ai/generate-config
+Authorization: Bearer {{apiKey}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "sampleDocument": {
+    "code": 12345,
+    "id": 12345,
+    "brand": "ExampleBrand",
+    "category": {
+      "category_id": 10,
+      "category_name": "Electronics Components"
+    },
+    "color": "Black",
+    "description": "High-performance CPU model X2000 with 8 cores",
+    "model": "X2000",
+    "sales_last_60_days": 150,
+    "storage": null,
+    "thumbnail": "https://example.com/image.jpg",
+    "weight": 0.1,
+    "width": 5,
+    "subcategory": {
+      "sub_category_id": 101,
+      "sub_category_name": "Processors"
+    },
+    "price": 350.75,
+    "price_without_tax": 300,
+    "price_tax": 50.75,
+    "stock": 50,
+    "tags": ["cpu", "8-core", "gaming", "high-performance"]
+  }
+}
